@@ -34,7 +34,7 @@ public class AuthServiceImpl implements IAuthService {
     private RefreshToken createRefreshToken(User user)
     {
         RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setRefreshToken(UUID.randomUUID().toString());
+        refreshToken.setToken(UUID.randomUUID().toString());
         refreshToken.setExpireDate(new Date(System.currentTimeMillis()+ 1000 * 60 * 60 * 4));
         refreshToken.setUser(user);
         return refreshToken;
@@ -49,7 +49,7 @@ public class AuthServiceImpl implements IAuthService {
            String accessToken = jwtService.generateToken(optionalUser.get());
            RefreshToken refreshToken = createRefreshToken(optionalUser.get());
            refreshTokenRepository.save(refreshToken);
-           return new AuthResponse(accessToken,refreshToken.getRefreshToken());
+           return new AuthResponse(accessToken,refreshToken.getToken());
         }catch(Exception e){
             throw new AuthException("Kullanıcı adı veya şifre hatalı");
         }
