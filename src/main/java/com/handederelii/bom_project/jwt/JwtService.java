@@ -12,40 +12,48 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Function;
 
 
 @Service
 public class JwtService {
-    private final SecretKey key;
+    private final SecretKey secretKey;
     private final long ttlSeconds;
 
     public JwtService(
-            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.secret}") String secretKey,
             @Value("${jwt.access-token-ttl:3600}") long ttlSeconds
     ) {
-        // secret en az 32 byte olmalı
-        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.secretKey = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
         this.ttlSeconds = ttlSeconds;
     }
 
     public String generateToken(UserDetails userDetails) {
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
+        //        .addClaims(claimsMap)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000*5))
-                .signWith(this.key, SignatureAlgorithm.HS256)
+                .setExpiration(new Date(System.currentTimeMillis() + ttlSeconds * 1000 ))
+                .signWith(this.secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public <T> T exportToken(String token, Function<Claims,T> claimsFunction){ // token içinden istediğin bilgiyi almanı sağlar
-        Claims claims=Jwts.parserBuilder()
-                .setSigningKey(key)
+    public Object getClaimsByKey(String token, String key){
+        Claims claims = getClaims(token);
+        return claims.get(key);
+
+    }
+
+    public Claims getClaims(String token){
+        return Jwts.parserBuilder()
+                .setSigningKey(secretKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    public <T> T exportToken(String token, Function<Claims,T> claimsFunction){ // token içinden istediğin bilgiyi almanı sağlar
+        Claims claims=getClaims(token);
          return claimsFunction.apply(claims);
     }
 

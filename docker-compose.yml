@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: bom-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: bom-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+  app:
+    build: .
+    container_name: bom-app
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_TOKEN_TTL: 3600
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  pgdata:
+  redisdata:

@@ -4,7 +4,9 @@ import com.handederelii.bom_project.controller.IRestAuthController;
 import com.handederelii.bom_project.dto.DtoUser;
 import com.handederelii.bom_project.jwt.AuthRequest;
 import com.handederelii.bom_project.jwt.AuthResponse;
+import com.handederelii.bom_project.jwt.RefreshTokenRequest;
 import com.handederelii.bom_project.service.IAuthService;
+import com.handederelii.bom_project.service.IRefreshTokenService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,15 +20,24 @@ import org.springframework.web.bind.annotation.RestController;
 public class RestAuthControllerImpl implements IRestAuthController {
 
     private final IAuthService authService;
+    private final IRefreshTokenService refreshTokenService;
 
     @Override
     @PostMapping("/register")
     public DtoUser register( @Valid @RequestBody AuthRequest request) {
+
         return authService.register(request);
     }
+
     @PostMapping("/login")
     @Override
     public AuthResponse authenticate(@Valid @RequestBody AuthRequest request) {
         return authService.authenticate(request);
+    }
+
+    @PostMapping("/refreshToken")
+    @Override
+    public AuthResponse refreshToken(@RequestBody RefreshTokenRequest request) {
+        return refreshTokenService.refreshToken(request);
     }
 }
