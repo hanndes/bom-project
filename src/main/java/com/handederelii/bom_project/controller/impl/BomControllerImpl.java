@@ -30,29 +30,24 @@ public class BomControllerImpl implements IBomController {
 
         String username = principal != null ? principal.getName() : "anonymous";
 
-        // Idempotency: Aynı scope + body (+user) için sadece 1 kez çalıştır
         return idempotencyService.runOnce(
-                "POST:/bom/query",   // scope: endpoint'i açıkça yaz
-                req,                 // body: hash bunun üzerinden üretilecek
-                Duration.ofSeconds(120), // TTL: istersen değiştir (örn. ofMinutes(10))
-                () -> {              // action: yaptığın tüm işi buraya koy
-                    // 1) İş kuralı (quote)
+                "bom.quote",                 // 1) scope
+                req,                         // 2) body
+                Duration.ofSeconds(120),     // 3) ttl
+                () -> {                      // 4) Supplier<BomResponse>
                     var quote = bomQuoteService.computeQuote(req.mpn(), req.quantity());
-
-                    // 2) Redis’e 1 gün TTL ile log
                     String requestId = redisBomService.save(
-                            req.mpn(), req.quantity(), username, Duration.ofDays(1));
-
-                    // 3) HTTP cevabı
+                            req.mpn(), req.quantity(), username, Duration.ofDays(1)
+                    );
                     return new BomResponse(
                             quote.mpn(), quote.quantity(), quote.supplier(),
                             quote.unitPrice().doubleValue(), quote.totalPrice().doubleValue(),
-                            requestId);
+                            requestId
+                    );
                 },
-                username              // actorId: kullanıcıya özel idempotency
+                username ,BomResponse.class                    // 5) actorKey
         );
     }
-
 
     @GetMapping("/{requestId}")
     public String getRaw(@PathVariable String requestId) {
