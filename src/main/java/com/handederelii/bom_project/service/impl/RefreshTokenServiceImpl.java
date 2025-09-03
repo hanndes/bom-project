@@ -39,7 +39,7 @@ public class RefreshTokenServiceImpl implements IRefreshTokenService {
     //sjkfaskf ksjf askjf aksjf kjsldfkjl
     @Override
     public AuthResponse refreshToken(RefreshTokenRequest request) {
-        Optional<RefreshToken> optional = refreshTokenRepository.findByRefreshToken(request.getRefreshToken());
+        Optional<RefreshToken> optional = refreshTokenRepository.findByToken(request.getRefreshToken());
         if(optional.isEmpty()) {
             log.warn("Refresh token süresi dolmuş. token={}", request.getRefreshToken());
         }
